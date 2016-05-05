@@ -33,6 +33,7 @@ SharedPreferences sp =getSharedPreferences(TAG, MODE);
     public SharedPreferences getSharedPreferences(String name, int mode) {
         SharedPreferencesImpl sp;
         synchronized (ContextImpl.class) {
+        	//初始化包名到SP的映射
             if (sSharedPrefs == null) {
                 sSharedPrefs = new ArrayMap<String, ArrayMap<String, SharedPreferencesImpl>>();
             }
@@ -40,6 +41,7 @@ SharedPreferences sp =getSharedPreferences(TAG, MODE);
             final String packageName = getPackageName();
             ArrayMap<String, SharedPreferencesImpl> packagePrefs = sSharedPrefs.get(packageName);
             if (packagePrefs == null) {
+                //初始化app的SPs
                 packagePrefs = new ArrayMap<String, SharedPreferencesImpl>();
                 sSharedPrefs.put(packageName, packagePrefs);
             }
@@ -53,15 +55,17 @@ SharedPreferences sp =getSharedPreferences(TAG, MODE);
                     name = "null";
                 }
             }
-
+			  //根据包名获取App的所有SP实例
             sp = packagePrefs.get(name);
             if (sp == null) {
+            	   //如果获取到的SP为空，则需要创建一个SP实例
                 File prefsFile = getSharedPrefsFile(name);
                 sp = new SharedPreferencesImpl(prefsFile, mode);
                 packagePrefs.put(name, sp);
                 return sp;
             }
         }
+        //在Android 3.0以下支持MODE_MULTI_PROCESS模式，意图实现多进程数据一致性，不过很容易出问题，所以后来就放弃了，把多进程数据共享交给ContentProvider
         if ((mode & Context.MODE_MULTI_PROCESS) != 0 ||
             getApplicationInfo().targetSdkVersion < android.os.Build.VERSION_CODES.HONEYCOMB) {
             // If somebody else (some other process) changed the prefs
